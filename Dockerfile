@@ -1,14 +1,10 @@
 FROM php:8.1-fpm
 
-# Arguments defined in docker-compose.yml (Optional)
-# ARG user
-# ARG uid
-
-# Set default values for uid and user
+# Set environment variables
 ENV user=myuser
 ENV uid=1000
 
-# Install system dependencies (including nginx)
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -25,28 +21,30 @@ RUN apt-get update && apt-get install -y \
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN pecl install imagick \
-    && docker-php-ext-enable imagick
-
 # Install PHP extensions
+RUN pecl install imagick && docker-php-ext-enable imagick
 RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
-# Get latest Composer
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Create system user to run Composer and Artisan Commands
+# Create user
 RUN useradd -G www-data,root -u $uid -d /home/$user $user
 RUN mkdir -p /home/$user/.composer && \
     chown -R $user:$user /home/$user
 
-# Set working directory
+# Configure Nginx
+RUN rm /etc/nginx/sites-enabled/default
+COPY nginx.conf /etc/nginx/sites-available/default
+RUN ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
+
 WORKDIR /var/www
 
-# Copy nginx configuration (you'll need to add this)
-# COPY ./nginx.conf /etc/nginx/nginx.conf
+# Set permissions
+RUN chown -R $user:www-data /var/www
+RUN chmod -R 775 /var/www/storage
 
-# Expose HTTP port
 EXPOSE 80
 
-# Start the services
-CMD ["nginx", "-g", "daemon off;"]
+# Start both Nginx and PHP-FPM
+CMD bash -c "service nginx start && php-fpm"
