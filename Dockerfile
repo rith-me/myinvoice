@@ -35,8 +35,7 @@ RUN mkdir -p /home/$user/.composer && \
 
 # Configure Nginx
 RUN rm /etc/nginx/sites-enabled/default
-COPY nginx.conf /etc/nginx/sites-available/default
-RUN ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 WORKDIR /var/www
 
@@ -47,4 +46,4 @@ RUN chmod -R 775 /var/www/storage
 EXPOSE 80
 
 # Start both Nginx and PHP-FPM
-CMD bash -c "service nginx start && php-fpm"
+CMD bash -c "nginx -g 'daemon off;' & php-fpm"
