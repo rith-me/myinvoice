@@ -8,6 +8,15 @@ FROM php:8.1-fpm
 ENV user=myuser
 ENV uid=1000
 
+# Install Nginx or Apache (choose one)
+RUN apt-get install -y nginx
+
+# Expose HTTP port
+EXPOSE 80
+
+# Start the services
+CMD ["nginx", "-g", "daemon off;"]
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
