@@ -1,8 +1,12 @@
 FROM php:8.1-fpm
 
-# Arguments defined in docker-compose.yml
-ARG user
-ARG uid
+# Arguments defined in docker-compose.yml (Optional)
+# ARG user
+# ARG uid
+
+# Set default values for uid and user
+ENV user=myuser
+ENV uid=1000
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -35,6 +39,4 @@ RUN mkdir -p /home/$user/.composer && \
     chown -R $user:$user /home/$user
 
 # Set working directory
-WORKDIR /var/www
-
-USER $user
+WORK
