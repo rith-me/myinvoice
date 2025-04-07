@@ -8,10 +8,7 @@ FROM php:8.1-fpm
 ENV user=myuser
 ENV uid=1000
 
-# Start the services
-CMD ["nginx", "-g", "daemon off;"]
-
-# Install system dependencies
+# Install system dependencies (including nginx)
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -22,7 +19,8 @@ RUN apt-get update && apt-get install -y \
     unzip \
     libzip-dev \
     libmagickwand-dev \
-    mariadb-client
+    mariadb-client \
+    nginx
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -44,10 +42,11 @@ RUN mkdir -p /home/$user/.composer && \
 # Set working directory
 WORKDIR /var/www
 
-USER $user
-
-# Install nginx
-RUN apt-get install -y nginx
+# Copy nginx configuration (you'll need to add this)
+# COPY ./nginx.conf /etc/nginx/nginx.conf
 
 # Expose HTTP port
 EXPOSE 80
+
+# Start the services
+CMD ["nginx", "-g", "daemon off;"]
