@@ -41,7 +41,7 @@ WORKDIR /var/www
 
 # Set permissions
 RUN chown -R $user:www-data /var/www
-RUN chmod -R 775 /var/www/storage
+RUN mkdir -p /var/www/storage && chmod -R 775 /var/www/storage
 
 EXPOSE 80
 
