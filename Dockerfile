@@ -1,49 +1,31 @@
 FROM php:8.1-fpm
 
-# Set environment variables
-ENV user=myuser
-ENV uid=1000
-
-# Install system dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip \
-    libzip-dev \
-    libmagickwand-dev \
-    mariadb-client \
-    nginx
+    nginx \
+    # ... [keep your other packages] ...
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install PHP extensions
-RUN pecl install imagick && docker-php-ext-enable imagick
+# PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Create user
-RUN useradd -G www-data,root -u $uid -d /home/$user $user
-RUN mkdir -p /home/$user/.composer && \
-    chown -R $user:$user /home/$user
-
-# Configure Nginx
-RUN rm /etc/nginx/sites-enabled/default
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Configure Nginx directly
+RUN echo "server { \
+    listen 80; \
+    root /var/www/public; \
+    index index.php index.html; \
+    \
+    location / { \
+        try_files \$uri \$uri/ /index.php?\$query_string; \
+    } \
+    \
+    location ~ \.php\$ { \
+        fastcgi_pass 127.0.0.1:9000; \
+        include fastcgi_params; \
+        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name; \
+    } \
+}" > /etc/nginx/conf.d/default.conf
 
 WORKDIR /var/www
-
-# Set permissions
-RUN chown -R $user:www-data /var/www
-RUN mkdir -p /var/www/storage && chmod -R 775 /var/www/storage
-
 EXPOSE 80
-
-# Start both Nginx and PHP-FPM
-CMD bash -c "nginx -g 'daemon off;' & php-fpm"
+CMD ["sh", "-c", "nginx -g 'daemon off;' & php-fpm"]
