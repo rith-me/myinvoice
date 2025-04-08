@@ -1,12 +1,22 @@
 FROM php:8.1-fpm
 
-# Install dependencies
+
+# ដំឡើងកញ្ចប់ដែលត្រូវការ រួមទាំង oniguruma
 RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \  
+    libxml2-dev \
+    zip \
+    unzip \
+    libzip-dev \
+    libmagickwand-dev \
+    mariadb-client \
     nginx \
-    # ... [keep your other packages] ...
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# PHP extensions
+# ដំឡើង PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
 # Configure Nginx directly
