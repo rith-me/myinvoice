@@ -1,4 +1,4 @@
-FROM php:8.1-fpm
+FROM php:8.2-fpm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -62,14 +62,10 @@ WORKDIR /var/www
 # Copy application files into the container
 COPY . /var/www
 
-# Install Composer dependencies and run Laravel commands
-RUN /usr/local/bin/composer install --no-dev --optimize-autoloader
-RUN php artisan optimize:clear
-RUN php artisan storage:link
-RUN php artisan migrate --force
-
 # Expose port
 EXPOSE 80
 
-# Start Supervisor
+# Start Supervisor (this is what runs the PHP-FPM and NGINX processes)
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+
+# Run Composer install and Laravel commands at container runtime (use entrypoint script or override CMD in `docker-compose.yml` if needed)
