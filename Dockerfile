@@ -1,12 +1,11 @@
 FROM php:8.1-fpm
 
-
-# ដំឡើងកញ្ចប់ដែលត្រូវការ រួមទាំង oniguruma
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     libpng-dev \
-    libonig-dev \  
+    libonig-dev \
     libxml2-dev \
     zip \
     unzip \
@@ -14,28 +13,51 @@ RUN apt-get update && apt-get install -y \
     libmagickwand-dev \
     mariadb-client \
     nginx \
+    supervisor \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# ដំឡើង PHP extensions
+# Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
-# Configure Nginx directly
-RUN echo "server { \
-    listen 80; \
-    root /var/www/public; \
-    index index.php index.html; \
-    \
-    location / { \
-        try_files \$uri \$uri/ /index.php?\$query_string; \
-    } \
-    \
-    location ~ \.php\$ { \
-        fastcgi_pass 127.0.0.1:9000; \
-        include fastcgi_params; \
-        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name; \
-    } \
-}" > /etc/nginx/conf.d/default.conf
+# Create necessary directories
+RUN mkdir -p /run/php && mkdir -p /var/log/supervisor
 
+# Configure NGINX using shell script
+RUN rm -f /etc/nginx/sites-enabled/default && \
+    echo "server { \
+        listen 80; \
+        server_name localhost; \
+        root /var/www/public; \
+        index index.php index.html; \
+        location / { \
+            try_files \$uri \$uri/ /index.php?\$query_string; \
+        } \
+        location ~ \.php\$ { \
+            include snippets/fastcgi-php.conf; \
+            fastcgi_pass unix:/run/php/php-fpm.sock; \
+            fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name; \
+        } \
+        location ~ /\.ht { \
+            deny all; \
+        } \
+    }" > /etc/nginx/sites-available/default
+
+# Enable NGINX site
+RUN ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+
+# Supervisor configuration
+RUN echo "[supervisord] \
+nodaemon=true \
+[program:php-fpm] \
+command=/usr/local/sbin/php-fpm -F \
+[program:nginx] \
+command=/usr/sbin/nginx -g 'daemon off;'" > /etc/supervisor/conf.d/supervisord.conf
+
+# Set working directory
 WORKDIR /var/www
+
+# Expose port
 EXPOSE 80
-CMD ["sh", "-c", "nginx -g 'daemon off;' & php-fpm"]
+
+# Start Supervisor
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
