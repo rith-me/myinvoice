@@ -19,7 +19,7 @@ RUN mkdir -p /run/php && mkdir -p /var/log/supervisor
 RUN rm -f /etc/nginx/sites-enabled/default && \
     echo "server { \
         listen 80; \
-        server_name localhost; \
+        server_name myinvoice-production.up.railway.app; \
         root /var/www/public; \
         index index.php index.html; \
         location / { \
