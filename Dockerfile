@@ -62,3 +62,4 @@ EXPOSE 80
 # Start supervisor via entrypoint
 ENTRYPOINT ["/var/www/entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+RUN mkdir -p /run/php
