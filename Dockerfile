@@ -56,6 +56,12 @@ command=/usr/sbin/nginx -g 'daemon off;'" > /etc/supervisor/conf.d/supervisord.c
 # Set working directory
 WORKDIR /var/www
 
+# Install Composer dependencies and run Laravel commands
+RUN composer install --no-dev --optimize-autoloader
+RUN php artisan optimize:clear
+RUN php artisan storage:link
+RUN php artisan migrate --force
+
 # Expose port
 EXPOSE 80
 
