@@ -19,6 +19,9 @@ RUN apt-get update && apt-get install -y \
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
 # Create necessary directories
 RUN mkdir -p /run/php && mkdir -p /var/log/supervisor
 
@@ -56,8 +59,11 @@ command=/usr/sbin/nginx -g 'daemon off;'" > /etc/supervisor/conf.d/supervisord.c
 # Set working directory
 WORKDIR /var/www
 
+# Copy application files into the container
+COPY . /var/www
+
 # Install Composer dependencies and run Laravel commands
-RUN composer install --no-dev --optimize-autoloader
+RUN /usr/local/bin/composer install --no-dev --optimize-autoloader
 RUN php artisan optimize:clear
 RUN php artisan storage:link
 RUN php artisan migrate --force
