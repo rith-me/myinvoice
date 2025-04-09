@@ -46,11 +46,11 @@ RUN rm -f /etc/nginx/sites-enabled/default && \
 RUN ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
 # Supervisor configuration
-RUN echo "[supervisord] \
-nodaemon=true \
-[program:php-fpm] \
-command=/usr/local/sbin/php-fpm -F \
-[program:nginx] \
+RUN echo "[supervisord] \n\
+nodaemon=true \n\
+[program:php-fpm] \n\
+command=/usr/local/sbin/php-fpm -F \n\
+[program:nginx] \n\
 command=/usr/sbin/nginx -g 'daemon off;'" > /etc/supervisor/conf.d/supervisord.conf
 
 # Set working directory
