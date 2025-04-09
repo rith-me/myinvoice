@@ -27,7 +27,7 @@ RUN rm -f /etc/nginx/sites-enabled/default && \
         } \
         location ~ \.php\$ { \
             include snippets/fastcgi-php.conf; \
-            fastcgi_pass unix:/run/php/php-fpm.sock; \
+            fastcgi_pass unix:/run/php/php8.2-fpm.sock; \
             fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name; \
         } \
         location ~ /\.ht { \
