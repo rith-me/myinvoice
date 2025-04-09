@@ -1,65 +1,34 @@
-FROM php:8.2-fpm
+FROM php:8.2-apache
 
-# Install system dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
-    git curl libpng-dev libonig-dev libxml2-dev zip unzip \
-    libzip-dev libmagickwand-dev mariadb-client nginx supervisor \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    libzip-dev \
+    unzip \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
+RUN docker-php-ext-install pdo pdo_mysql zip gd mbstring exif pcntl bcmath
 
 # Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Create necessary directories
-RUN mkdir -p /run/php && mkdir -p /var/log/supervisor
+# Copy files
+COPY . /var/www/html
 
-# Fix nginx config
-RUN rm -f /etc/nginx/sites-enabled/default && \
-    echo "server { \
-        listen 80; \
-        server_name myinvoice-production.up.railway.app; \
-        root /var/www/public; \
-        index index.php index.html; \
-        location / { \
-            try_files \$uri \$uri/ /index.php?\$query_string; \
-        } \
-        location ~ \.php\$ { \
-            include snippets/fastcgi-php.conf; \
-            fastcgi_pass unix:/run/php/php8.2-fpm.sock; \
-            fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name; \
-        } \
-        location ~ /\.ht { \
-            deny all; \
-        } \
-    }" > /etc/nginx/sites-available/default
+# Set working directory
+WORKDIR /var/www/html
 
-# Enable site
-RUN ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+# Install dependencies
+RUN composer install --optimize-autoloader --no-dev
 
-# Supervisor config
-RUN echo "[supervisord] \n\
-nodaemon=true \n\
-[program:php-fpm] \n\
-command=/usr/local/sbin/php-fpm -F \n\
-[program:nginx] \n\
-command=/usr/sbin/nginx -g 'daemon off;'" > /etc/supervisor/conf.d/supervisord.conf
-
-# Set working dir
-WORKDIR /var/www
-
-# Copy app
-COPY . /var/www
-
-# Copy and make entrypoint executable
-COPY entrypoint.sh /var/www/entrypoint.sh
-RUN chmod +x /var/www/entrypoint.sh
+# Permissions
+RUN chown -R www-data:www-data /var/www/html/storage
+RUN chmod -R 775 /var/www/html/storage
 
 # Expose port
-EXPOSE 80
+EXPOSE 8080
 
-# Start supervisor via entrypoint
-ENTRYPOINT ["/var/www/entrypoint.sh"]
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
-RUN mkdir -p /run/php
+# Start command
+CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8080"]
