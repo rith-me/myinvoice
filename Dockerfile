@@ -37,7 +37,7 @@ RUN rm -f /etc/nginx/sites-enabled/default && \
         } \
         location ~ \.php\$ { \
             include snippets/fastcgi-php.conf; \
-            fastcgi_pass unix:/run/php/php-fpm.sock; \
+            fastcgi_pass unix:/run/php/php8.1-fpm.sock; \
             fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name; \
         } \
         location ~ /\.ht { \
@@ -66,6 +66,8 @@ COPY . /var/www
 EXPOSE 80
 
 # Start Supervisor (this is what runs the PHP-FPM and NGINX processes)
+ENTRYPOINT ["/var/www/entrypoint.sh"]
+
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
 
 # Run Composer install and Laravel commands at container runtime (use entrypoint script or override CMD in `docker-compose.yml` if needed)
