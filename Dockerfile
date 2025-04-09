@@ -1,15 +1,9 @@
-FROM php:8.2-apache
+# For Nginx instead of Apache
+FROM php:8.2-fpm
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    libzip-dev \
-    unzip \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev
-
+RUN apt-get update && apt-get install -y nginx
 # Install PHP extensions
-RUN docker-php-ext-install pdo pdo_mysql zip gd mbstring exif pcntl bcmath
+RUN docker-php-ext-install pdo_mysql zip gd mbstring exif pcntl bcmath
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -22,13 +16,14 @@ WORKDIR /var/www/html
 
 # Install dependencies
 RUN composer install --optimize-autoloader --no-dev
+RUN npm install && npm run production
 
 # Permissions
 RUN chown -R www-data:www-data /var/www/html/storage
 RUN chmod -R 775 /var/www/html/storage
 
-# Expose port
+COPY nginx.conf /etc/nginx/nginx.conf
+
 EXPOSE 8080
 
-# Start command
-CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8080"]
+CMD service nginx start && php-fpm
