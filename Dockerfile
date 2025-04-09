@@ -64,4 +64,3 @@ EXPOSE 80
 # Start supervisor via entrypoint
 ENTRYPOINT ["/var/www/entrypoint.sh"]
 # Start command
-CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=8080"]
