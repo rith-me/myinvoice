@@ -15,10 +15,10 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Create necessary directories
 RUN mkdir -p /run/php && mkdir -p /var/log/supervisor
 
-# Fix nginx config
+# Configure nginx to use Railway's PORT
 RUN rm -f /etc/nginx/sites-enabled/default && \
     echo "server { \
-        listen 80; \
+        listen ${PORT}; \
         server_name _; \
         root /var/www/html/public; \
         index index.php index.html; \
@@ -29,14 +29,12 @@ RUN rm -f /etc/nginx/sites-enabled/default && \
             include fastcgi_params; \
             fastcgi_pass 127.0.0.1:9000; \
             fastcgi_index index.php; \
-            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \
+            fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name; \
         } \
-    }" > /etc/nginx/sites-available/default
+    }" > /etc/nginx/sites-available/default && \
+    ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
-# Enable site
-RUN ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
-
-# Supervisor config
+# Configure supervisor
 RUN echo "[supervisord] \n\
 nodaemon=true \n\
 [program:php-fpm] \n\
@@ -44,21 +42,26 @@ command=/usr/local/sbin/php-fpm -F \n\
 [program:nginx] \n\
 command=/usr/sbin/nginx -g 'daemon off;'" > /etc/supervisor/conf.d/supervisord.conf
 
-# Set working dir
-WORKDIR /var/www
+# Set working directory
+WORKDIR /var/www/html
 
-# Copy app
-COPY . /var/www
+# Copy application files
+COPY . .
 
-# Copy and make entrypoint executable
-COPY entrypoint.sh /var/www/entrypoint.sh
-RUN chmod +x /var/www/entrypoint.sh
+# Install dependencies
+RUN composer install --optimize-autoloader --no-dev
 
-# Expose port
-EXPOSE 8080
+# Set permissions
+RUN chown -R www-data:www-data storage bootstrap/cache
+RUN chmod -R 775 storage bootstrap/cache
 
-# Start supervisor via entrypoint
-ENTRYPOINT ["/var/www/entrypoint.sh"]
-# CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
-# Start command
-CMD ["sh", "-c", "php artisan storage:link && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8080"]
+# Create entrypoint script
+RUN echo "#!/bin/bash \n\
+php artisan storage:link \n\
+php artisan migrate --force \n\
+/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf" > /entrypoint.sh && \
+    chmod +x /entrypoint.sh
+
+EXPOSE $PORT
+
+ENTRYPOINT ["/entrypoint.sh"]
