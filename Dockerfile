@@ -55,13 +55,13 @@ RUN composer install --optimize-autoloader --no-dev
 RUN chown -R www-data:www-data storage bootstrap/cache
 RUN chmod -R 775 storage bootstrap/cache
 
-# Create entrypoint script
-RUN echo "#!/bin/bash \n\
-php artisan storage:link \n\
-php artisan migrate --force \n\
-/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf" > /entrypoint.sh && \
-    chmod +x /entrypoint.sh
+COPY entrypoint.sh /var/www/entrypoint.sh
+RUN chmod +x /var/www/entrypoint.sh
 
-EXPOSE $PORT
+# Expose port
+EXPOSE 80
 
-ENTRYPOINT ["/entrypoint.sh"]
+# Start supervisor via entrypoint
+ENTRYPOINT ["/var/www/entrypoint.sh"]
+# Start command
+CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=8080"]
