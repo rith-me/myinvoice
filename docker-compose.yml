@@ -18,7 +18,7 @@ services:
       - crater
 
   db:
-    image: mariadb
+    image: mysql:8.0
     restart: always
     volumes:
       - db:/var/lib/mysql
@@ -26,10 +26,8 @@ services:
       # and uncomment the line under this one.
       #- ./docker-compose/db/data:/var/lib/mysql:rw,delegated
     environment:
-      MYSQL_USER: crater
-      MYSQL_PASSWORD: crater
-      MYSQL_DATABASE: crater
-      MYSQL_ROOT_PASSWORD: crater
+      MYSQL_ROOT_PASSWORD: HngsBIyzrSXiawUGREdOeJKWiqvprMJw
+      MYSQL_DATABASE: railway
     ports:
       - '33006:3306'
     networks:
