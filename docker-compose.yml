@@ -2,6 +2,7 @@ version: '3'
 
 services:
   app:
+    command: ["php", "/var/www/artisan", "serve"]
     healthcheck: none
     build:
       args:

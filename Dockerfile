@@ -31,6 +31,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
+RUN apt-get update && apt-get install -y php php-cli php-fpm
 
 # Create system user to run Composer and Artisan Commands
 RUN useradd -G www-data,root -u $uid -d /home/$user $user
