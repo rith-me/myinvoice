@@ -38,6 +38,9 @@ RUN mkdir -p /home/$user/.composer && \
     chown -R $user:$user /home/$user
 
 # Set working directory
+RUN chown -R www-data:www-data /var/www
+RUN chmod -R 755 /var/www
+
 WORKDIR /var/www
 
 USER $user
