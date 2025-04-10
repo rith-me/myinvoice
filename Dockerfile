@@ -15,33 +15,37 @@ RUN apt-get update && apt-get install -y \
     unzip \
     libzip-dev \
     libmagickwand-dev \
-    mariadb-client
+    mariadb-client \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
+# Install Imagick
 RUN pecl install imagick \
     && docker-php-ext-enable imagick
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
-# Get latest Composer
+# Copy Composer from the Composer image
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Copy entrypoint script and set permissions
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+# Set the entrypoint to your custom script
 ENTRYPOINT ["/entrypoint.sh"]
-RUN apt-get update && apt-get install -y php php-cli php-fpm
 
 # Create system user to run Composer and Artisan Commands
 RUN useradd -G www-data,root -u $uid -d /home/$user $user
 RUN mkdir -p /home/$user/.composer && \
     chown -R $user:$user /home/$user
 
-# Set working directory
+# Set working directory and permissions
+WORKDIR /var/www
 RUN chown -R www-data:www-data /var/www
 RUN chmod -R 755 /var/www
-
-WORKDIR /var/www
 
 USER $user
