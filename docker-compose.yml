@@ -2,12 +2,7 @@ version: '3'
 
 services:
   app:
-  healthcheck:
-    test: ["CMD", "curl", "-f", "http://localhost/"]
-    retries: 5
-    interval: 30s
-    start_period: 60s
-    timeout: 10s
+    healthcheck: none
     build:
       args:
         user: crater-user
