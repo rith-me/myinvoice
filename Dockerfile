@@ -15,26 +15,30 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Create necessary directories
 RUN mkdir -p /run/php && mkdir -p /var/log/supervisor
 
-# Configure nginx to use Railway's PORT
+# Fix nginx config
 RUN rm -f /etc/nginx/sites-enabled/default && \
     echo "server { \
-        listen ${PORT}; \
-        server_name _; \
-        root /var/www/html/public; \
+        listen 80; \
+        server_name myinvoice-production.up.railway.app; \
+        root /var/www/crater-master/public; \
         index index.php index.html; \
         location / { \
             try_files \$uri \$uri/ /index.php?\$query_string; \
         } \
         location ~ \.php\$ { \
-            include fastcgi_params; \
-            fastcgi_pass 127.0.0.1:9000; \
-            fastcgi_index index.php; \
+            include snippets/fastcgi-php.conf; \
+            fastcgi_pass unix:/run/php/php-fpm.sock; \
             fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name; \
         } \
-    }" > /etc/nginx/sites-available/default && \
-    ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+        location ~ /\.ht { \
+            deny all; \
+        } \
+    }" > /etc/nginx/sites-available/default
 
-# Configure supervisor
+# Enable site
+RUN ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+
+# Supervisor config
 RUN echo "[supervisord] \n\
 nodaemon=true \n\
 [program:php-fpm] \n\
@@ -42,19 +46,13 @@ command=/usr/local/sbin/php-fpm -F \n\
 [program:nginx] \n\
 command=/usr/sbin/nginx -g 'daemon off;'" > /etc/supervisor/conf.d/supervisord.conf
 
-# Set working directory
-WORKDIR /var/www/html
+# Set working dir
+WORKDIR /var/www
 
-# Copy application files
-COPY . .
+# Copy app
+COPY . /var/www
 
-# Install dependencies
-RUN composer install --optimize-autoloader --no-dev
-
-# Set permissions
-RUN chown -R www-data:www-data storage bootstrap/cache
-RUN chmod -R 775 storage bootstrap/cache
-
+# Copy and make entrypoint executable
 COPY entrypoint.sh /var/www/entrypoint.sh
 RUN chmod +x /var/www/entrypoint.sh
 
@@ -63,4 +61,4 @@ EXPOSE 80
 
 # Start supervisor via entrypoint
 ENTRYPOINT ["/var/www/entrypoint.sh"]
-# Start command
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
