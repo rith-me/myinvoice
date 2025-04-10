@@ -6,7 +6,7 @@
     "startCommand": "/entrypoint.sh",
     "healthcheckPath": "/",
     "healthcheckTimeout": 120,
-    "restartPolicyType": "always",
+    "restartPolicyType": "on_failure",
     "restartPolicyMaxRetries": 5
   }
 }

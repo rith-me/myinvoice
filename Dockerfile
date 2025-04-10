@@ -10,8 +10,7 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
 # Install Node.js and npm
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && apt-get install -y nodejs
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -30,15 +29,16 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . .
 
-# Install dependencies
+# Install PHP and JS dependencies
 RUN composer install --optimize-autoloader --no-dev \
-    && npm install && npm run build
+    && npm install \
+    && npm run build
 
-# Set permissions
+# Set correct permissions for Laravel
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Create entrypoint script
+# Copy and make the entrypoint script executable
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
