@@ -21,14 +21,8 @@ RUN rm -f /etc/nginx/sites-enabled/default
 COPY nginx.conf /etc/nginx/sites-available/default
 RUN ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
-# Configure supervisor
-RUN echo "[supervisord]\n\
-nodaemon=true\n\
-[program:php-fpm]\n\
-command=/usr/local/sbin/php-fpm -F\n\
-[program:nginx]\n\
-command=/usr/sbin/nginx -g 'daemon off;'\n\
-" > /etc/supervisor/conf.d/supervisord.conf
+# Configure Supervisor
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Set working directory
 WORKDIR /var/www/html
@@ -38,19 +32,16 @@ COPY . .
 
 # Install dependencies
 RUN composer install --optimize-autoloader --no-dev \
-    && npm install && npm run production
+    && npm install && npm run build
 
 # Set permissions
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
 # Create entrypoint script
-RUN echo "#!/bin/bash\n\
-php artisan storage:link\n\
-php artisan migrate --force\n\
-/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf\n\
-" > /entrypoint.sh && chmod +x /entrypoint.sh
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-EXPOSE $PORT
+EXPOSE 80
 
 ENTRYPOINT ["/entrypoint.sh"]

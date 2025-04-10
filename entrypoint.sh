@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Laravel Setup
-composer install --no-dev --optimize-autoloader
-php artisan optimize:clear
+# Run Laravel commands
+php artisan config:clear
+php artisan config:cache
 php artisan storage:link
 php artisan migrate --force
 
-# Run the supervisor (starts nginx + php-fpm)
-exec "$@"
+# Start Supervisor
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
