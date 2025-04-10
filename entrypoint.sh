@@ -9,4 +9,3 @@ php artisan storage:link
 php artisan migrate --force
 
 # Start Supervisor
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
