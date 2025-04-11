@@ -1,11 +1,10 @@
 {
   "build": {
-    "builder": "dockerfile"
+    "builder": "nixpacks"
   },
   "deploy": {
-    "startCommand": "/entrypoint.sh",
-    "healthcheckPath": "/",
-    "healthcheckTimeout": 120,
+    "startCommand": "php artisan serve --host=0.0.0.0 --port=8000",
+    "healthcheckPath": "/health",
     "restartPolicyType": "on_failure",
     "restartPolicyMaxRetries": 5
   }
