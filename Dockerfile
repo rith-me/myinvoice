@@ -45,7 +45,11 @@ RUN mkdir -p /home/$user/.composer && \
 
 # Set working directory and permissions
 WORKDIR /var/www
+# Expose port
+EXPOSE 80
 RUN chown -R www-data:www-data /var/www
 RUN chmod -R 755 /var/www
+
+
 
 USER $user
