@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cp .env.example .env
+
 composer install --no-dev --optimize-autoloader
 php artisan key:generate
 php artisan migrate --force
