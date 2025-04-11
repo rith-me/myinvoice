@@ -15,13 +15,15 @@ RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 COPY crater-master/ /var/www
-COPY crater-master/entrypoint.sh /entrypoint.sh
+COPY entrypoint.sh /entrypoint.sh
+
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
 
 RUN useradd -G www-data,root -u $uid -d /home/$user $user
 RUN mkdir -p /home/$user/.composer && chown -R $user:$user /home/$user
+
 
 WORKDIR /var/www
 RUN chown -R www-data:www-data /var/www
