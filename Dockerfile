@@ -1,47 +1,55 @@
-FROM php:8.2-fpm
+FROM php:8.1-fpm
+
+# Arguments defined in docker-compose.yml
+ARG user=crater-user
+ARG uid=1000
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git curl libpng-dev libonig-dev libxml2-dev zip unzip \
-    libzip-dev libmagickwand-dev mariadb-client nginx supervisor \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    libzip-dev \
+    libmagickwand-dev \
+    mariadb-client \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install Imagick
+RUN pecl install imagick \
+    && docker-php-ext-enable imagick
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
-# Install Node.js and npm
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && apt-get install -y nodejs
+# Copy Composer from the Composer image
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-# Configure nginx
-RUN rm -f /etc/nginx/sites-enabled/default
-COPY nginx.conf /etc/nginx/sites-available/default
-RUN ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
-
-# Configure Supervisor
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Set working directory
-WORKDIR /var/www/html
-
-# Copy application files
-COPY . .
-
-# Install PHP and JS dependencies
-RUN composer install --optimize-autoloader --no-dev \
-    && npm install \
-    && npm run build
-
-# Set correct permissions for Laravel
-RUN chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
-
-# Copy and make the entrypoint script executable
+# Copy entrypoint script and set permissions
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 80
-
+# Set the entrypoint to your custom script
 ENTRYPOINT ["/entrypoint.sh"]
+
+# Create system user to run Composer and Artisan Commands
+RUN useradd -G www-data,root -u $uid -d /home/$user $user
+RUN mkdir -p /home/$user/.composer && \
+    chown -R $user:$user /home/$user
+
+# Set working directory and permissions
+WORKDIR /var/www
+# Expose port
+EXPOSE 80
+RUN chown -R www-data:www-data /var/www
+RUN chmod -R 755 /var/www
+
+
+
+USER $user
