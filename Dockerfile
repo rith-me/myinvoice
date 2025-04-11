@@ -14,7 +14,7 @@ RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-COPY crater-master/ /var/www
+
 COPY entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh
@@ -26,6 +26,8 @@ RUN mkdir -p /home/$user/.composer && chown -R $user:$user /home/$user
 
 
 WORKDIR /var/www
+COPY . /var/www
+
 RUN chown -R www-data:www-data /var/www
 RUN chmod -R 755 /var/www
 
