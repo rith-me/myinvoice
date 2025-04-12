@@ -144,9 +144,9 @@ Route::get('/', function () {
 })->where('vue', '[\/\w\.-]*')->name('home')->middleware(['install', 'guest']);
 
 // Add this to your web.php for health check
-// Route::get('/health', function () {
-//     return response()->json(['status' => 'ok']);
-// });
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok']);
+});
 // Route::get('/', function () {
 //     return view('app');
 // })->name('home');
