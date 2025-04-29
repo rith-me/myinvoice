@@ -5,9 +5,16 @@
     <title>@lang('pdf_invoice_label') - {{ $invoice->invoice_number }}</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <style type="text/css">
+        @font-face {
+            font-family: 'KhmerFont';
+            src: url("file://{{ public_path('build\fonts\NotoSansKhmer-Regular.ttf') }}") format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
         /* -- Base -- */
         body {
-            font-family: "DejaVu Sans";
+            /* font-family: "DejaVu Sans"; */
+            font-family:'KhmerFont', 'Khmer OS Battambang', "DejaVu Sans",  sans-serif;
         }
 
         html {
